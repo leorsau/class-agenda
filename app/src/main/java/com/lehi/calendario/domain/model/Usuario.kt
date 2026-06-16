@@ -1,8 +1,8 @@
 package com.lehi.calendario.domain.model
 
 data class Usuario (
-    val id: Int?=null,
-    val nombre: String?=null,
-    val email: String?=null,
-    val contrasena: String?=null
+    val id: Int,
+    val nombre: String,
+    val email: String,
+    val contrasena: String
 )

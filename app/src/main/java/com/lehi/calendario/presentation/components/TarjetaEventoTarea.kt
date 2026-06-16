@@ -1,5 +1,6 @@
 package com.lehi.calendario.presentation.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,74 +24,137 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.lehi.calendario.R
+import com.lehi.calendario.presentation.models.HomeItem
+import com.lehi.calendario.presentation.models.HomeUIEvent
+import com.lehi.calendario.presentation.models.TipoItem
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @Composable
-fun TarjetaEventoTarea(){
+fun TarjetaEventoTarea(
+    item: HomeItem,
+    onClick: ()-> Unit
+){
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 16.dp),
-        shape = RoundedCornerShape(24.dp),
+            .padding(vertical = 12.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE9EAEC)
+            containerColor = MaterialTheme.colorScheme.surface
         )
-    ){
-        Box(
+    ) {
+
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(18.dp)
+                .padding(16.dp)
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = Color(0xFFCDECEF)
-                ) {
-                    Text(
-                       text = "Bases de datos",
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                        style= MaterialTheme.typography.labelMedium,
-                        color = Color.Black
-                    )
-                }
-                Spacer(modifier = Modifier.height(12.dp))
+            SurfaceTipoItem(item.tipo)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+
+            Text(
+                text = item.titulo,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+
+            if (!item.descripcion.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Práctica de SQL",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.Black
+                    text = item.descripcion,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.icono_fecha),
-                        contentDescription = "Fecha de entrega",
-                        modifier = Modifier.size(16.dp),
-                        tint = Color.DarkGray
-                    )
-
-                    Spacer(modifier = Modifier.width(4.dp))
-
-                    Text(
-                        text = "Entrega: 2023-11-20",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Color.DarkGray
-                    )
-                }
             }
-            Icon(
-                painter = painterResource(id =R.drawable.icono_fecha),
-                contentDescription = "Tipo tarea",
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .size(24.dp),
-                tint = Color.DarkGray
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+
+            if (item.tipo == TipoItem.TAREA) {
+                FilaFechaTarea(item)
+            } else {
+                FilaFechaEvento(item)
+            }
+        }
+    }
+}
+
+@Composable
+fun SurfaceTipoItem(tipo: TipoItem) {
+
+    val colorFondo = when (tipo) {
+        TipoItem.TAREA -> Color(0xD2034750)
+        TipoItem.EVENTO -> Color(0xFFFFE082)
+    }
+
+    val colorTexto = when (tipo) {
+        TipoItem.TAREA -> Color.White
+        TipoItem.EVENTO -> Color.Black
+    }
+
+    Surface(
+        color = colorFondo,
+        shape = RoundedCornerShape(8.dp)
+    ) {
+
+
+        Text(
+            text = if (tipo == TipoItem.TAREA) "Tarea" else "Evento",
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            style = MaterialTheme.typography.labelLarge,
+            color = colorTexto
+        )
+    }
+}
+
+
+@Composable
+fun FilaFechaTarea(item: HomeItem) {
+    Row {
+        Text(
+            text = "Fecha: ${formatearFechaTarjeta(item.fechaInicio)}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+fun FilaFechaEvento(item: HomeItem) {
+    Column {
+
+        Row {
+            Text(
+                text = "Inicio: ${formatearFechaTarjeta(item.fechaInicio)} ${item.horaInicio}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Row {
+            Text(
+                text = "Fin: ${formatearFechaTarjeta(item.fechaFin)} ${item.horaFin}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
+}
 
+fun formatearFechaTarjeta(fechaTexto: String?): String {
+    if (fechaTexto == null) {
+        return ""
+    }
+
+    val fecha = LocalDate.parse(fechaTexto)
+    val formato = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+
+    return fecha.format(formato)
 }

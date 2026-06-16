@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.lehi.calendario.presentation.navigation.Navegacion
 import com.lehi.calendario.presentation.theme.CalendarioTheme
 import com.lehi.calendario.presentation.views.PantallaEventDetails
 import com.lehi.calendario.presentation.views.PantallaHome
@@ -20,22 +21,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             CalendarioTheme {
-
-
-
-              // PantallaHome()
-
-                // PantallaTaskDetails()
-
-                // PantallaEventDetails()
-
-                // PantallaUserProfile()
-
-                // PantallaUserEditProfile()
-
-                 PantallaLogin()
-
-                //PantallaRegister()
+                Navegacion()
             }
         }
     }

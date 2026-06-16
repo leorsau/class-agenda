@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -22,21 +24,43 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lehi.calendario.R
+import com.lehi.calendario.presentation.models.UserEditProfileUIEvent
+import com.lehi.calendario.presentation.models.UserEditProfileUIState
+import com.lehi.calendario.presentation.viewModels.UserEditProfileViewModel
 
 @Composable
-fun PantallaUserEditProfile(){
-    CuerpoPantallaUserEditProfile()
+fun PantallaUserEditProfile(
+    onVolverClick:()-> Unit,
+    onPerfilActualizado:()-> Unit
+){
+    val userEditProfileViewModel: UserEditProfileViewModel= viewModel()
+    val uiState by userEditProfileViewModel.uiState.collectAsState()
+
+    if(uiState.perfilActualizado){
+        onPerfilActualizado()
+    }
+
+    CuerpoPantallaUserEditProfile(
+        uiState=uiState,
+        onEvent=userEditProfileViewModel::onEvent,
+        onVolverClick=onVolverClick)
 }
 
 @Composable
 fun CuerpoPantallaUserEditProfile(
+    uiState: UserEditProfileUIState,
+    onEvent: (UserEditProfileUIEvent) -> Unit,
+    onVolverClick: () -> Unit,
     modificadorCuerpoPantalla: Modifier= Modifier
         .fillMaxSize()
         .background(MaterialTheme.colorScheme.background))
@@ -55,7 +79,9 @@ fun CuerpoPantallaUserEditProfile(
                 horizontalArrangement = Arrangement.Start
             ) {
                 IconButton(
-                    onClick = {},
+                    onClick = {
+                        onVolverClick()
+                    },
                     modifier = Modifier.size(60.dp)
                 ){
                     Icon(
@@ -82,7 +108,7 @@ fun CuerpoPantallaUserEditProfile(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Button(
-                    onClick = { },
+                    onClick = { onEvent(UserEditProfileUIEvent.GuardarClick)},
                     modifier = Modifier
                         .height(50.dp)
                         .fillMaxWidth(),
@@ -108,7 +134,8 @@ fun CuerpoPantallaUserEditProfile(
         Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .fillMaxSize(),
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Card(
@@ -128,12 +155,9 @@ fun CuerpoPantallaUserEditProfile(
                         )
 
                         OutlinedTextField(
-                            value = "",
+                            value = uiState.nombreActual,
                             onValueChange = {},
                             readOnly = true,
-                            placeholder = {
-                                Text("lehi ortiz")
-                            },
                             modifier = Modifier.fillMaxWidth(),
                         )
 
@@ -146,8 +170,10 @@ fun CuerpoPantallaUserEditProfile(
                         )
 
                         OutlinedTextField(
-                            value = "",
-                            onValueChange = {},
+                            value = uiState.nuevoNombre,
+                            onValueChange = {
+                                onEvent(UserEditProfileUIEvent.NuevoNombreCambiado(it))
+                            },
                             readOnly = false,
                             placeholder = {
                                 Text("ej: lehisito")
@@ -176,7 +202,7 @@ fun CuerpoPantallaUserEditProfile(
                         )
 
                         OutlinedTextField(
-                            value = "",
+                            value = uiState.contrasenaActual,
                             onValueChange = {},
                             readOnly = true,
                             placeholder = {
@@ -189,16 +215,18 @@ fun CuerpoPantallaUserEditProfile(
 
                     Column(modifier = Modifier.padding(bottom = 16.dp)) {
                         Text(
-                            text = "Repita Contraseña",
+                            text = "Nueva Contraseña",
                             style = MaterialTheme.typography.bodyLarge
                         )
 
                         OutlinedTextField(
-                            value = "",
-                            onValueChange = {},
+                            value = uiState.nuevaContrasena,
+                            onValueChange = {
+                                onEvent(UserEditProfileUIEvent.NuevaContrasenaCambiada(it))
+                            },
                             readOnly = false,
                             placeholder = {
-                                Text("*************")
+                                Text("ej: nuevapassword123")
                             },
                             modifier = Modifier.fillMaxWidth(),
                         )
@@ -206,6 +234,13 @@ fun CuerpoPantallaUserEditProfile(
                     }
                 }
             }//fin de la segunda Card
+            if (uiState.mensajeError != null) {
+                Text(
+                    text = uiState.mensajeError,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
 
             Card(
                 modifier = Modifier
@@ -219,16 +254,18 @@ fun CuerpoPantallaUserEditProfile(
 
                     Column(modifier = Modifier.padding(bottom = 16.dp, top = 16.dp)) {
                         Text(
-                            text = "Nueva Contraseña",
+                            text = "Confirmar Nueva Contraseña",
                             style = MaterialTheme.typography.bodyLarge,
                         )
 
                         OutlinedTextField(
-                            value = "",
-                            onValueChange = {},
-                            readOnly = true,
+                            value = uiState.repetirNuevaContrasena,
+                            onValueChange = {
+                                onEvent(UserEditProfileUIEvent.RepetirNuevaContrasenaCambiada(it))
+                            },
+                            readOnly = false,
                             placeholder = {
-                                Text("ej: nuevapassword12345")
+                                Text("ej: nuevapassword123")
                             },
                             modifier = Modifier.fillMaxWidth(),
                         )
@@ -238,6 +275,17 @@ fun CuerpoPantallaUserEditProfile(
                 }
             }//fin de la tercera Card
 
+
+
+            if (uiState.perfilActualizado) {
+                Text(
+                    text = "Perfil actualizado correctamente",
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
         }//fin de la colum del cuerpo del Scaffold
+
     }//fin del cuerpo del Scaffold
 }

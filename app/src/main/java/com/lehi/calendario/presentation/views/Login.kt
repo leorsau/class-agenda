@@ -32,13 +32,21 @@ import com.lehi.calendario.presentation.models.LoginUIState
 
 
 @Composable
-fun PantallaLogin() {
+fun PantallaLogin(
+    onLoginCorrecto:()->Unit,
+    onCrearCuentaClick:()-> Unit
+) {
 
     val loginViewModel: LoginViewModel= viewModel()
     val uiState by loginViewModel.uiState.collectAsState()
+
+    if(uiState.loginCorrecto){
+        onLoginCorrecto()
+    }
     cuerpoPantallaLogin(
         uiState=uiState,
-        onEvent=loginViewModel::onEvent
+        onEvent=loginViewModel::onEvent,
+        onCrearCuentaClick=onCrearCuentaClick
     )
 }
 
@@ -46,6 +54,7 @@ fun PantallaLogin() {
 fun cuerpoPantallaLogin(
     uiState: LoginUIState,
     onEvent:(LoginUIEvent)-> Unit,
+    onCrearCuentaClick: () -> Unit,
     modificadorCuerpoPantalla: Modifier = Modifier
         .fillMaxSize()
         .background(MaterialTheme.colorScheme.background)
@@ -92,7 +101,16 @@ fun cuerpoPantallaLogin(
                     style = MaterialTheme.typography.labelMedium
                 )
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            isError = uiState.mensajeErrorEmailContrasena!=null,
+            supportingText = {
+                if(uiState.mensajeErrorEmailContrasena!=null){
+                    Text(text = uiState.mensajeErrorEmailContrasena,
+                        color = MaterialTheme.colorScheme.error
+                    )
+
+                }
+            }
         )
 
         OutlinedTextField(
@@ -110,12 +128,20 @@ fun cuerpoPantallaLogin(
                     style = MaterialTheme.typography.labelMedium
                 )
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            isError = uiState.mensajeErrorEmailContrasena!=null,
+            supportingText = {
+                if(uiState.mensajeErrorEmailContrasena!=null){
+                    Text(text = uiState.mensajeErrorEmailContrasena,
+                        color = MaterialTheme.colorScheme.error
+                        )
+                }
+            }
         )
 
-        if(uiState.mensajeError!=null){
+        if(uiState.mensajeErrorCamposVacios!=null){
             Text(
-                text = uiState.mensajeError,
+                text = uiState.mensajeErrorCamposVacios,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyMedium
             )
@@ -147,7 +173,7 @@ fun cuerpoPantallaLogin(
             color = MaterialTheme.colorScheme.primary,
             fontSize = 20.sp,
             modifier = Modifier.clickable {
-
+                onCrearCuentaClick()
             }
         )
     }

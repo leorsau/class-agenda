@@ -6,7 +6,7 @@ data class Evento (
     val id: Int,
     val usuario: Usuario,
     val titulo: String,
-    val descripcion: String?,
-    val fechaInicioEvento: String,
-    val fechaFinEvento: String
+    val descripcion: String,
+    val fechaInicioEvento: LocalDateTime,
+    val fechaFinEvento: LocalDateTime
 )

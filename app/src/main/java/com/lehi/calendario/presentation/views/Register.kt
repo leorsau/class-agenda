@@ -17,26 +17,39 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lehi.calendario.R
+import com.lehi.calendario.presentation.viewModels.RegisterViewModel
+import androidx.compose.runtime.getValue
+import com.lehi.calendario.presentation.models.RegisterUIEvent
+import com.lehi.calendario.presentation.models.RegisterUIState
 
 @Composable
 fun PantallaRegister(
-    onBackToLogin: () -> Unit = {},
-    onRegisterSuccess: () -> Unit = {}
+    onRegistroCorrecto:()-> Unit
 ) {
-    cuerpoPantallaRegister(onBackToLogin, onRegisterSuccess)
+    val registerViewModel: RegisterViewModel= viewModel()
+    val uiState by registerViewModel.uiState.collectAsState()
+    if(uiState.registroCorrecto){
+        onRegistroCorrecto()
+    }
+    cuerpoPantallaRegister(
+        uiState=uiState,
+        onEvent=registerViewModel::onEvent
+    )
 }
 
 @Composable
 fun cuerpoPantallaRegister(
-    onBackToLogin: () -> Unit,
-    onRegisterSuccess: () -> Unit,
+    uiState: RegisterUIState,
+    onEvent:(RegisterUIEvent)-> Unit,
     modificadorCuerpoPantalla: Modifier = Modifier
         .fillMaxSize()
         .background(MaterialTheme.colorScheme.background)
@@ -51,7 +64,7 @@ fun cuerpoPantallaRegister(
     ) {
 
         IconButton(
-            onClick = { onBackToLogin() },
+            onClick = {  },
             modifier = Modifier
                 .size(60.dp)
                 .align(Alignment.Start)
@@ -77,9 +90,8 @@ fun cuerpoPantallaRegister(
         )
 
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
-            isError = false,
+            value = uiState.nombre,
+            onValueChange = {onEvent(RegisterUIEvent.NombreCambiado(it))},
             label = {
                 Text(
                     text = "Nombre",
@@ -96,9 +108,8 @@ fun cuerpoPantallaRegister(
         )
 
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
-            isError = false,
+            value = uiState.email,
+            onValueChange = {onEvent(RegisterUIEvent.EmailCambiado(it))},
             label = {
                 Text(
                     text = "Correo electrónico",
@@ -111,13 +122,20 @@ fun cuerpoPantallaRegister(
                     style = MaterialTheme.typography.labelMedium
                 )
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            isError = uiState.mensajeErrorEmailFormat!=null,
+            supportingText = {
+                if(uiState.mensajeErrorEmailFormat!=null){
+                    Text(text = uiState.mensajeErrorEmailFormat,
+                        color =  MaterialTheme.colorScheme.error
+                    )
+                }
+            }
         )
 
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
-            isError = false,
+            value = uiState.contrasena,
+            onValueChange = {onEvent(RegisterUIEvent.ContrasenaCambiada(it))},
             label = {
                 Text(
                     text = "Contraseña",
@@ -130,13 +148,13 @@ fun cuerpoPantallaRegister(
                     style = MaterialTheme.typography.labelMedium
                 )
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            isError = uiState.mensajeErrorContrasena!=null,
         )
 
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
-            isError = false,
+            value = uiState.repetirContrasena,
+            onValueChange = {onEvent(RegisterUIEvent.RepetirContrasenaCambiada(it))},
             label = {
                 Text(
                     text = "Repite la contraseña",
@@ -149,12 +167,28 @@ fun cuerpoPantallaRegister(
                     style = MaterialTheme.typography.labelMedium
                 )
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            isError = uiState.mensajeErrorContrasena!=null,
+            supportingText = {
+                if(uiState.mensajeErrorContrasena!=null){
+                    Text(text = uiState.mensajeErrorContrasena,
+                        color =  MaterialTheme.colorScheme.error
+                    )
+                }
+            }
         )
+
+        if (uiState.mensajeErrorCampos != null) {
+            Text(
+                text = uiState.mensajeErrorCampos,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
 
         Button(
             onClick = {
-                onRegisterSuccess()
+                onEvent(RegisterUIEvent.CrearCuentaClick)
             },
             modifier = Modifier
                 .fillMaxWidth()

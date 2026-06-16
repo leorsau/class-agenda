@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -21,21 +23,46 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lehi.calendario.R
+import com.lehi.calendario.presentation.models.UserProfileUIEvent
+import com.lehi.calendario.presentation.models.UserProfileUIState
+import com.lehi.calendario.presentation.viewModels.UserProfileViewModel
 
 @Composable
-fun PantallaUserProfile(){
-    CuerpoPantallaUserProfile()
+fun PantallaUserProfile(
+    onVolverClick:()-> Unit,
+    onEditarPerfilClick:()-> Unit,
+    onCerrarSesionClick:()-> Unit
+){
+    val userProfileViewModel: UserProfileViewModel= viewModel()
+    val uiState by userProfileViewModel.uiState.collectAsState()
+    if(uiState.sesionCerrada){
+        onCerrarSesionClick()
+    }
+    CuerpoPantallaUserProfile(
+        uiState=uiState,
+        onEvent=userProfileViewModel::onEvent,
+        onVolverClick=onVolverClick,
+        onEditarPerfilClick=onEditarPerfilClick
+    )
 }
 
 @Composable
 fun CuerpoPantallaUserProfile(
+    uiState: UserProfileUIState,
+    onEvent:(UserProfileUIEvent)-> Unit,
+    onVolverClick: () -> Unit,
+    onEditarPerfilClick: () -> Unit,
     modificadorCuerpoPantalla: Modifier= Modifier
         .fillMaxSize()
         .background(MaterialTheme.colorScheme.background))
@@ -54,7 +81,9 @@ fun CuerpoPantallaUserProfile(
                 horizontalArrangement = Arrangement.Start
             ) {
                 IconButton(
-                    onClick = {},
+                    onClick = {
+                        onVolverClick()
+                    },
                     modifier = Modifier.size(60.dp)
                 ){
                     Icon(
@@ -77,7 +106,8 @@ fun CuerpoPantallaUserProfile(
         Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .fillMaxSize(),
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
@@ -89,12 +119,12 @@ fun CuerpoPantallaUserProfile(
             )
             Text(
                 modifier = Modifier.padding(top = 12.dp),
-                text = "Mi nombre",
+                text = uiState.nombre,
                 style = MaterialTheme.typography.titleLarge,
                 fontSize = 26.sp
             )
             Text(
-                text = "ej: lehiortiz@hotmail.com",
+                text = uiState.email,
                 style = MaterialTheme.typography.bodyLarge
             )
 
@@ -128,7 +158,7 @@ fun CuerpoPantallaUserProfile(
                         )
 
                         Text(
-                            text = "12",
+                            text = uiState.tareasCompletadas.toString(),
                             style = MaterialTheme.typography.titleLarge,
                             color = Color(0xFF00796B),
                             modifier = Modifier.padding(end = 4.dp)
@@ -148,7 +178,7 @@ fun CuerpoPantallaUserProfile(
                         )
 
                         Text(
-                            text = "12",
+                            text = uiState.tareasPendientes.toString(),
                             style = MaterialTheme.typography.titleLarge,
                             color = Color(0xFF00796B),
                             modifier = Modifier.padding(end = 4.dp)
@@ -168,7 +198,7 @@ fun CuerpoPantallaUserProfile(
                         )
 
                         Text(
-                            text = "12",
+                            text = uiState.eventosProximos.toString(),
                             style = MaterialTheme.typography.titleLarge,
                             color = Color(0xFF00796B),
                             modifier = Modifier.padding(end = 4.dp)
@@ -202,7 +232,25 @@ fun CuerpoPantallaUserProfile(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
+                                onEditarPerfilClick()
+                            }
+                            .padding(vertical = 4.dp)
+                    )
 
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 12.dp),
+                        thickness = 0.7.dp,
+                        color = Color.White
+                    )
+
+                    Text(
+                        text = "Cerrar sesión",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.Red,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onEvent(UserProfileUIEvent.CerrarSesionClick)
                             }
                             .padding(vertical = 4.dp)
                     )

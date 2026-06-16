@@ -22,32 +22,73 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lehi.calendario.R
+import com.lehi.calendario.presentation.components.PopupBotonHome
 import com.lehi.calendario.presentation.components.TarjetaEventoTarea
+import com.lehi.calendario.presentation.models.HomeUIEvent
+import com.lehi.calendario.presentation.models.HomeUIState
+import com.lehi.calendario.presentation.viewModels.HomeViewModel
+import androidx.compose.foundation.lazy.items
+import com.lehi.calendario.presentation.models.FiltroHome
+import com.lehi.calendario.presentation.models.TipoItem
 
 
 @Composable
-fun PantallaHome() {
-    cuerpoPantallaHome()
+fun PantallaHome(
+    onCrearTareaClick: () -> Unit,
+    onCrearEventoClick: () -> Unit,
+    onAbrirTareaClick: (Int) -> Unit,
+    onAbrirEventoClick: (Int) -> Unit,
+    onPerfilClick: () -> Unit
+) {
+    val homeViewModel: HomeViewModel= viewModel()
+    val uiState by homeViewModel.uiState.collectAsState()
+    cuerpoPantallaHome(
+        uiState=uiState,
+        onEvent=homeViewModel::onEvent,
+        onCrearTareaClick = onCrearTareaClick,
+        onCrearEventoClick = onCrearEventoClick,
+        onAbrirTareaClick = onAbrirTareaClick,
+        onAbrirEventoClick = onAbrirEventoClick,
+        onPerfilClick = onPerfilClick
+    )
 }
 
 @Composable
-fun cuerpoPantallaHome(modificadorCuerpoPantalla: Modifier= Modifier
-    .fillMaxSize()
-    .background(MaterialTheme.colorScheme.background)) {
+fun cuerpoPantallaHome(
+    uiState: HomeUIState,
+    onEvent:(HomeUIEvent)-> Unit,
+    onCrearTareaClick: () -> Unit,
+    onCrearEventoClick: () -> Unit,
+    onAbrirTareaClick: (Int) -> Unit,
+    onAbrirEventoClick: (Int) -> Unit,
+    onPerfilClick: () -> Unit,
+    modificadorCuerpoPantalla: Modifier= Modifier
+        .fillMaxSize()
+        .background(MaterialTheme.colorScheme.background)) {
     Column(modifier = modificadorCuerpoPantalla) {
         Scaffold(
             modifier = modificadorCuerpoPantalla.padding(16.dp),
             containerColor = Color.Transparent,
-            content = { innerPadding ->CuerpoScaffold( modifier = Modifier.padding(innerPadding)) },
+            content = { innerPadding ->
+                CuerpoScaffold(
+                    uiState=uiState,
+                    onEvent=onEvent,
+                    onAbrirTareaClick,
+                    onAbrirEventoClick,
+                    modifier = Modifier.padding(innerPadding)) },
             topBar = {
                 Row(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .statusBarsPadding()
                         .height(70.dp)
                         .padding(top = 16.dp),
@@ -58,8 +99,11 @@ fun cuerpoPantallaHome(modificadorCuerpoPantalla: Modifier= Modifier
                         style = MaterialTheme.typography.titleMedium
                     )
                     IconButton(
-                        onClick = {},
-                        modifier = Modifier.size(42.dp)
+                        onClick = {
+                            onPerfilClick()
+                        },
+                        modifier = Modifier
+                            .size(42.dp)
                             .padding(end = 6.dp)
                     ) {
                         Icon(
@@ -71,7 +115,10 @@ fun cuerpoPantallaHome(modificadorCuerpoPantalla: Modifier= Modifier
             },
             floatingActionButtonPosition = FabPosition.End,
             floatingActionButton = {
-                Button(onClick = {},
+                Button(
+                    onClick = {
+                        onEvent(HomeUIEvent.AbrirPopupCrearClick)
+                    },
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.size(60.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -81,9 +128,24 @@ fun cuerpoPantallaHome(modificadorCuerpoPantalla: Modifier= Modifier
                     ) {
                     Text(
                         text = "+",
-                        fontSize = 32.sp,
+                        fontSize = 28.sp,
                     )
                 }
+            }
+        )
+    }
+    if(uiState.mostrarPopupCrear) {
+        PopupBotonHome(
+            onCrearTareaClick = {
+                onEvent(HomeUIEvent.CrearTareaClick)
+                onCrearTareaClick()
+            },
+            onCrearEventoClick = {
+                onEvent(HomeUIEvent.CrearEventoClick)
+                onCrearEventoClick()
+            },
+            onCerrarClick = {
+                onEvent(HomeUIEvent.CerrarPopupCrearClick)
             }
         )
     }
@@ -91,9 +153,16 @@ fun cuerpoPantallaHome(modificadorCuerpoPantalla: Modifier= Modifier
 
 
 @Composable
-fun CuerpoScaffold(modifier:Modifier= Modifier){
+fun CuerpoScaffold(
+    uiState: HomeUIState,
+    onEvent: (HomeUIEvent) -> Unit,
+    onAbrirTareaClick: (Int) -> Unit,
+    onAbrirEventoClick: (Int) -> Unit,
+    modifier:Modifier= Modifier
+){
     Column(
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
             .padding(top = 24.dp)
             .padding(bottom = 16.dp)
     ) {
@@ -113,10 +182,14 @@ fun CuerpoScaffold(modifier:Modifier= Modifier){
         ) {
             Button(
                 onClick = {
-
+                    onEvent(HomeUIEvent.FiltroTodosClick)
                 },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFFFFFF),
+                    containerColor = if(uiState.filtroSeleccionado== FiltroHome.TODOS){
+                        MaterialTheme.colorScheme.primary
+                    }else{
+                        Color.White
+                    }
                 ),
                 border = BorderStroke(1.dp, Color.DarkGray),
                 elevation = ButtonDefaults.buttonElevation(
@@ -127,16 +200,24 @@ fun CuerpoScaffold(modifier:Modifier= Modifier){
                 Text(
                     text = "Todos",
                     fontSize = 18.sp,
-                    color=Color.Black
+                    color=if(uiState.filtroSeleccionado== FiltroHome.TODOS){
+                        Color.White
+                    }else{
+                        Color.Black
+                    }
                 )
             }
 
             Button(
                 onClick = {
-
+                    onEvent(HomeUIEvent.FiltroTareasClick)
                 },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFFFFFF),
+                    containerColor = if(uiState.filtroSeleccionado== FiltroHome.TAREAS){
+                        MaterialTheme.colorScheme.primary
+                    }else{
+                      Color.White
+                    }
                 ),
                 border = BorderStroke(1.dp, Color.DarkGray),
                 elevation = ButtonDefaults.buttonElevation(
@@ -147,16 +228,24 @@ fun CuerpoScaffold(modifier:Modifier= Modifier){
                 Text(
                     text = "Tareas",
                     fontSize = 18.sp,
-                    color=Color.Black
+                    color=if(uiState.filtroSeleccionado== FiltroHome.TAREAS){
+                        Color.White
+                    }else{
+                        Color.Black
+                    }
                 )
             }
 
             Button(
                 onClick = {
-
+                    onEvent(HomeUIEvent.FiltroEventosClick)
                 },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFFFFFF),
+                    containerColor = if(uiState.filtroSeleccionado== FiltroHome.EVENTOS){
+                        MaterialTheme.colorScheme.primary
+                    }else{
+                        Color.White
+                    }
                 ),
                 border = BorderStroke(1.dp, Color.DarkGray),
                 elevation = ButtonDefaults.buttonElevation(
@@ -167,11 +256,18 @@ fun CuerpoScaffold(modifier:Modifier= Modifier){
                 Text(
                     text = "Eventos",
                     fontSize = 18.sp,
-                    color=Color.Black
+                    color=if(uiState.filtroSeleccionado== FiltroHome.EVENTOS){
+                        Color.White
+                    }else{
+                        Color.Black
+                    }
                 )
             }
         }
         columnaDeTarjetas(
+            uiState=uiState,
+            onAbrirTareaClick,
+            onAbrirEventoClick,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
@@ -183,12 +279,36 @@ fun CuerpoScaffold(modifier:Modifier= Modifier){
 
 @Composable
 fun columnaDeTarjetas(
+    uiState: HomeUIState,
+    onAbrirTareaClick: (Int) -> Unit,
+    onAbrirEventoClick: (Int) -> Unit,
     modifier: Modifier = Modifier.fillMaxSize()
 ){
     LazyColumn(
-
+        modifier=modifier
     ) {
-        item { TarjetaEventoTarea() }
+        if (uiState.items.isEmpty()) {
+            item {
+                Text(
+                    text = "No hay tareas ni eventos próximos",
+                    modifier = Modifier.padding(top = 24.dp),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        } else {
+            items(uiState.items) { item ->
+                TarjetaEventoTarea(
+                    item = item,
+                    onClick = {
+                        if(item.tipo== TipoItem.TAREA){
+                            onAbrirTareaClick(item.id)
+                        }else if(item.tipo== TipoItem.EVENTO){
+                            onAbrirEventoClick(item.id)
+                        }
+                    }
+                )
+            }
+        }
     }
 }
 
